@@ -1,0 +1,30 @@
+diff --git a/include/target.mk b/include/target.mk
+index c5f6e8bede..046c2197a3 100644
+--- a/include/target.mk
++++ b/include/target.mk
+@@ -10,7 +10,7 @@ ifneq ($(__target_inc),1)
+ __target_inc=1
+ 
+ # default device type
+-DEVICE_TYPE?=router
++DEVICE_TYPE?=unifi
+ 
+ # Default packages - the really basic set
+ DEFAULT_PACKAGES:=base-files libc libgcc busybox dropbear mtd uci opkg netifd fstools uclient-fetch logd
+@@ -19,6 +19,7 @@ DEFAULT_PACKAGES.nas:=block-mount fdisk lsblk mdadm
+ # For router targets
+ DEFAULT_PACKAGES.router:=dnsmasq iptables ip6tables ppp ppp-mod-pppoe firewall odhcpd odhcp6c
+ DEFAULT_PACKAGES.bootloader:=
++DEFAULT_PACKAGES.unifi:=odhcpd odhcp6c luci luci-ssl luci-theme-material kmod-shortcut-fe kmod-fast-classifier nano kmod-fs-jfs
+ 
+ ifneq ($(DUMP),)
+   all: dumpinfo
+@@ -157,7 +158,7 @@ LINUX_RECONF_DIFF = $(call __linux_confcmd,$(filter-out $(LINUX_RECONFIG_TARGET)
+ ifeq ($(DUMP),1)
+   BuildTarget=$(BuildTargets/DumpCurrent)
+ 
+-  CPU_CFLAGS = -Os -pipe
++  CPU_CFLAGS = -O2 -pipe
+   ifneq ($(findstring mips,$(ARCH)),)
+     ifneq ($(findstring mips64,$(ARCH)),)
+       CPU_TYPE ?= mips64
