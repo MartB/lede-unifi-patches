@@ -1,0 +1,42 @@
+From 9669d2f2b9548b695afe17e9f63068718d82fd92 Mon Sep 17 00:00:00 2001
+From: Julien Dusser <julien.dusser@free.fr>
+Date: Wed, 19 Jul 2017 15:45:08 +0200
+Subject: [PATCH] ar71xx: lzma loader use LTO
+
+Change the Makefile to use LTO for better code optimisations. Gains are
+very low, only 270 bytes saved, but it's only Makefile changes.
+
+Signed-off-by: Julien Dusser <julien.dusser@free.fr>
+---
+ target/linux/ar71xx/image/lzma-loader/src/Makefile | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/target/linux/ar71xx/image/lzma-loader/src/Makefile b/target/linux/ar71xx/image/lzma-loader/src/Makefile
+index 5f10bdb8f14..682b31fe8c9 100644
+--- a/target/linux/ar71xx/image/lzma-loader/src/Makefile
++++ b/target/linux/ar71xx/image/lzma-loader/src/Makefile
+@@ -37,11 +37,13 @@ CFLAGS		= -D__KERNEL__ -Wall -Wstrict-prototypes -Wno-trigraphs -Os \
+ 		  -mabi=32 -march=mips32r2 \
+ 		  -Wa,-32 -Wa,-march=mips32r2 -Wa,-mips32r2 -Wa,--trap
+ CFLAGS		+= -D_LZMA_PROB32
++CFLAGS		+= -flto
+ 
+ ASFLAGS		= $(CFLAGS) -D__ASSEMBLY__
+ 
+-LDFLAGS		= -static --gc-sections -no-warn-mismatch
+-LDFLAGS		+= -e startup -T loader.lds -Ttext $(LZMA_TEXT_START)
++LDFLAGS		= -static -Wl,--gc-sections -Wl,-no-warn-mismatch
++LDFLAGS		+= -Wl,-e,startup -T loader.lds -Wl,-Ttext,$(LZMA_TEXT_START)
++LDFLAGS		+= -flto -fwhole-program
+ 
+ O_FORMAT 	= $(shell $(OBJDUMP) -i | head -2 | grep elf32)
+ 
+@@ -86,7 +88,7 @@ data.o: $(LOADER_DATA)
+ 	$(LD) -r -b binary --oformat $(O_FORMAT) -T lzma-data.lds -o $@ $<
+ 
+ loader: $(OBJECTS)
+-	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS)
+ 
+ loader.bin: loader
+ 	$(OBJCOPY) $(BIN_FLAGS) $< $@

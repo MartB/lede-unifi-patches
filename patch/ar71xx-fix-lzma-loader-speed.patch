@@ -1,0 +1,41 @@
+From 4d65267e66db2b055cba4e1e5aed042f13338607 Mon Sep 17 00:00:00 2001
+From: Julien Dusser <julien.dusser@free.fr>
+Date: Wed, 19 Jul 2017 14:52:35 +0200
+Subject: [PATCH] ar71xx: fix lzma loader performance issues
+
+Some bootloaders set a cache cohenrency to a very slow mode. Use code from
+Linux kernel to set it to "Cacheable, noncoherent, write-back, write
+allocate".
+
+Perfomance impact is significant on TP-Link EAP245 board, kernel
+decompression time fall from 33 seconds to less than 1.
+
+Signed-off-by: Julien Dusser <julien.dusser@free.fr>
+---
+ target/linux/ar71xx/image/lzma-loader/src/head.S | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/target/linux/ar71xx/image/lzma-loader/src/head.S b/target/linux/ar71xx/image/lzma-loader/src/head.S
+index 47a7c9bd630..d414b14d11b 100644
+--- a/target/linux/ar71xx/image/lzma-loader/src/head.S
++++ b/target/linux/ar71xx/image/lzma-loader/src/head.S
+@@ -42,6 +42,19 @@ LEAF(startup)
+ 	mtc0	t0, CP0_STATUS
+ 	ehb
+ 
++	/*
++	 * Some bootloaders set the 'Kseg0 coherency algorithm' to
++	 * 'Cacheable, noncoherent, write-through, no write allocate'
++	 * and this cause performance issues. Let's go and change it to
++	 * 'Cacheable, noncoherent, write-back, write allocate'
++	 */
++	mfc0	t0, CP0_CONFIG
++	li	t1, ~7			#~CONF_CM_CMASK
++	and	t0, t1
++	ori	t0, 3			#CONF_CM_CACHABLE_NONCOHERENT
++	mtc0	t0, CP0_CONFIG
++	nop
++
+ 	mtc0	zero, CP0_COUNT
+ 	mtc0	zero, CP0_COMPARE
+ 	ehb
